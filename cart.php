@@ -1,28 +1,26 @@
 <?php
 session_start();
 
-$products = [
-    1 => [
-        'name' => 'Mechanical Gaming Keyboard',
-        'cost' => 79.99
-    ],
-    2 => [
-        'name' => 'Gaming Mouse',
-        'cost' => 49.99
-    ],
-    3 => [
-        'name' => 'Wireless Gaming Headset',
-        'cost' => 89.99
-    ],
-    4 => [
-        'name' => 'RGB Mouse Pad',
-        'cost' => 29.99
-    ],
-    5 => [
-        'name' => 'USB Gaming Controller',
-        'cost' => 39.99
-    ]
-];
+require_once "config.php";
+
+// Create the shopping cart if it does not already exist
+if (!isset($_SESSION['cart'])) {
+    $_SESSION['cart'] = [];
+}
+
+// Load products from the MySQL database
+$stmt = $pdo->query("SELECT * FROM products ORDER BY ProductID");
+$productRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Convert the database rows into the format used by the cart
+$products = [];
+
+foreach ($productRows as $row) {
+    $products[$row['ProductID']] = [
+        'name' => $row['ProductName'],
+        'cost' => $row['ProductCost']
+    ];
+}
 
 $subtotal = 0;
 $totalItems = 0;

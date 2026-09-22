@@ -1,59 +1,51 @@
 <?php
 session_start();
 
+require_once "config.php";
+
 // Create the shopping cart if it does not already exist
 if (!isset($_SESSION['cart'])) {
     $_SESSION['cart'] = [];
 }
 
-// Products for Week 2
-$products = [
-    1 => [
-        'name' => 'Mechanical Gaming Keyboard',
-        'description' => 'RGB mechanical keyboard designed for gaming.',
-        'cost' => 79.99
-    ],
-    2 => [
-        'name' => 'Gaming Mouse',
-        'description' => 'Lightweight gaming mouse with programmable buttons.',
-        'cost' => 49.99
-    ],
-    3 => [
-        'name' => 'Wireless Gaming Headset',
-        'description' => 'Wireless headset with surround sound and microphone.',
-        'cost' => 89.99
-    ],
-    4 => [
-        'name' => 'RGB Mouse Pad',
-        'description' => 'Large gaming mouse pad with RGB lighting.',
-        'cost' => 29.99
-    ],
-    5 => [
-        'name' => 'USB Gaming Controller',
-        'description' => 'USB controller compatible with PC games.',
-        'cost' => 39.99
-    ]
-];
+// Load products from the MySQL database
+$stmt = $pdo->query("SELECT * FROM products ORDER BY ProductID");
+$productRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Convert database products into the same format used by the website
+$products = [];
+
+foreach ($productRows as $row) {
+    $products[$row['ProductID']] = [
+        'name' => $row['ProductName'],
+        'description' => $row['ProductDescription'],
+        'cost' => $row['ProductCost']
+    ];
+}
 
 // Handle cart changes
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $productId = (int) $_POST['product_id'];
     $action = $_POST['action'];
 
-    if (!isset($_SESSION['cart'][$productId])) {
-        $_SESSION['cart'][$productId] = 0;
-    }
+    // Make sure the product actually exists
+    if (isset($products[$productId])) {
 
-    if ($action === 'add' || $action === 'increase') {
-        $_SESSION['cart'][$productId]++;
-    }
+        if (!isset($_SESSION['cart'][$productId])) {
+            $_SESSION['cart'][$productId] = 0;
+        }
 
-    if ($action === 'decrease' && $_SESSION['cart'][$productId] > 0) {
-        $_SESSION['cart'][$productId]--;
-    }
+        if ($action === 'add' || $action === 'increase') {
+            $_SESSION['cart'][$productId]++;
+        }
 
-    if ($action === 'remove') {
-        $_SESSION['cart'][$productId] = 0;
+        if ($action === 'decrease' && $_SESSION['cart'][$productId] > 0) {
+            $_SESSION['cart'][$productId]--;
+        }
+
+        if ($action === 'remove') {
+            $_SESSION['cart'][$productId] = 0;
+        }
     }
 
     header('Location: index.php');
@@ -78,6 +70,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <a href="cart.php" class="cart-link">
         View Shopping Cart
+    </a>
+
+    <a href="manage_products.php" class="cart-link">
+        Manage Products
     </a>
 </header>
 
